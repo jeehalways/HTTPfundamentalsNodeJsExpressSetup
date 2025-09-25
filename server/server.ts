@@ -113,6 +113,40 @@ app.get("/random-login", async (_req, res) => {
   }
 });
 
+// Optional — Random Address
+const randomAddressSchema = z.object({
+  results: z.array(
+    z.object({
+      location: z.object({
+        city: z.string(),
+        postcode: z.union([z.string(), z.number()]),
+      }),
+    })
+  ),
+});
+
+app.get("/random-address", async (_req, res) => {
+  try {
+    const response = await fetch("https://randomuser.me/api/");
+    const data = await response.json();
+
+    const parsed = randomAddressSchema.parse(data);
+    const user = parsed.results[0];
+
+    if (!user) {
+      return res.status(404).json({ error: "User data is undefined" });
+    }
+
+    res.json({
+      city: user.location.city,
+      postcode: user.location.postcode,
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch random address" });
+  }
+});
+
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

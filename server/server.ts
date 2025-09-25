@@ -52,6 +52,26 @@ app.get("/random-person", async (_req, res) => {
   }
 });
 
+// Phase 3 — Users POST
+const userSchema = z.object({
+  name: z.string().min(3).max(12),
+  age: z.number().min(18).max(100).optional().default(28),
+  email: z.string().email().transform((val) => val.toLowerCase()),
+});
+
+app.post("/users", (req, res) => {
+  try {
+    const user = userSchema.parse(req.body);
+    res.status(201).json(user);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ errors: err.issues });
+    } else {
+      res.status(500).json({ error: "Unexpected error" });
+    }
+  }
+});
+
 
 // Start server
 app.listen(PORT, () => {

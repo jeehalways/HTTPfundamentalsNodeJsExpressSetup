@@ -56,7 +56,10 @@ app.get("/random-person", async (_req, res) => {
 const userSchema = z.object({
   name: z.string().min(3).max(12),
   age: z.number().min(18).max(100).optional().default(28),
-  email: z.string().email().transform((val) => val.toLowerCase()),
+  email: z
+    .string()
+    .email()
+    .transform((val) => val.toLowerCase()),
 });
 
 app.post("/users", (req, res) => {
@@ -72,6 +75,43 @@ app.post("/users", (req, res) => {
   }
 });
 
+// Challenge — Random Login
+const randomLoginSchema = z.object({
+  results: z.array(
+    z.object({
+      login: z.object({
+        username: z.string(),
+      }),
+      registered: z.object({
+        date: z.string(),
+      }),
+    })
+  ),
+});
+
+app.get("/random-login", async (_req, res) => {
+  try {
+    const response = await fetch("https://randomuser.me/api/");
+    const data = await response.json();
+
+    const parsed = randomLoginSchema.parse(data);
+    const user = parsed.results[0];
+
+    if (!user) {
+      return res.status(404).json({ error: "User data is undefined" });
+    }
+
+    const date = new Date(user.registered.date).toISOString().split("T")[0];
+
+    res.json({
+      username: user.login.username,
+      registeredDate: date,
+      summary: `${user.login.username} (registered on ${date})`,
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch random login" });
+  }
+});
 
 // Start server
 app.listen(PORT, () => {
